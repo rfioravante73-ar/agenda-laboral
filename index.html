@@ -19,7 +19,8 @@
                         primary: '#3b82f6', 
                         pending: '#f97316', 
                         success: '#22c55e',
-                        danger: '#ef4444'
+                        danger: '#ef4444',
+                        client: '#8b5cf6' // Color violeta para clientes
                     },
                     borderRadius: { '2xl': '1.5rem', '3xl': '2rem' }
                 }
@@ -58,6 +59,15 @@
         /* Ocultar scrollbar pero mantener funcionalidad */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Estilos para el input de clave */
+        .shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translateX(-1px); }
+            20%, 80% { transform: translateX(2px); }
+            30%, 50%, 70% { transform: translateX(-3px); }
+            40%, 60% { transform: translateX(3px); }
+        }
     </style>
 </head>
 <body class="text-slate-800 h-screen overflow-hidden md:overflow-hidden flex flex-col">
@@ -77,13 +87,46 @@
                     <h2 class="text-2xl md:text-4xl font-extrabold text-slate-900 leading-tight">Administra tu tiempo</h2>
                     <p class="text-slate-500 text-base md:text-lg font-medium max-w-sm mx-auto">Accede a tus tareas, eventos y reuniones en una plataforma centralizada y segura.</p>
                 </div>
-                <button onclick="enterApp()" class="group relative w-full max-w-xs px-8 py-4 md:py-5 bg-slate-900 text-white font-bold text-lg hover:bg-blue-600 transition-all flex items-center justify-center gap-4 shadow-xl">
+                <button onclick="showAccessModal()" class="group relative w-full max-w-xs px-8 py-4 md:py-5 bg-slate-900 text-white font-bold text-lg hover:bg-blue-600 transition-all flex items-center justify-center gap-4 shadow-xl">
                     <span>INGRESAR AHORA</span>
                     <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
                 </button>
             </div>
         </div>
     </section>
+
+    <!-- Modal de Clave de Acceso -->
+    <div id="accessModal" onclick="if(event.target === this) closeAccessModal()" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[250] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] p-8 w-full max-w-sm relative modal-animate">
+            <button onclick="closeAccessModal()" class="absolute top-5 right-5 text-slate-400">
+                <i class="fa-solid fa-circle-xmark text-2xl"></i>
+            </button>
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-lock text-3xl text-primary"></i>
+                </div>
+                <h3 class="text-xl font-extrabold text-slate-900 mb-2">Clave de Acceso</h3>
+                <p class="text-slate-500 text-sm font-medium">Ingresa la clave para acceder a la agenda</p>
+            </div>
+            <form id="accessForm" class="space-y-5">
+                <div class="relative">
+                    <input type="password" id="accessKey" placeholder="Ingresa la clave" required 
+                           class="w-full bg-slate-50 rounded-xl p-4 border-2 border-slate-100 focus:border-primary outline-none pr-12 text-center font-bold text-lg tracking-wider">
+                    <button type="button" onclick="togglePasswordVisibility()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400">
+                        <i id="eyeIcon" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                <div id="accessError" class="hidden text-center">
+                    <p class="text-danger text-sm font-bold bg-red-50 py-2 px-4 rounded-lg">
+                        <i class="fa-solid fa-triangle-exclamation mr-2"></i>Clave incorrecta
+                    </p>
+                </div>
+                <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-xl font-extrabold shadow-lg hover:bg-blue-700 transition-colors">
+                    <i class="fa-solid fa-key mr-2"></i>Verificar Clave
+                </button>
+            </form>
+        </div>
+    </div>
 
     <div id="mainApp" class="hidden h-full flex flex-col md:flex-row overflow-hidden">
         <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3" preload="auto"></audio>
@@ -108,6 +151,9 @@
                 </button>
                 <button onclick="navigate('contacts')" id="nav-contacts" class="nav-btn w-full flex items-center gap-3 px-5 py-4 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition-all">
                     <i class="fa-solid fa-address-book"></i> Contactos
+                </button>
+                <button onclick="navigate('clients')" id="nav-clients" class="nav-btn w-full flex items-center gap-3 px-5 py-4 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-users"></i> Clientes
                 </button>
             </nav>
             <div class="p-4 border-t">
@@ -148,9 +194,9 @@
                             <div class="text-2xl md:text-4xl font-extrabold mt-1" id="stat-today">0</div>
                         </div>
                         <div class="bg-white p-4 md:p-6 rounded-3xl border-2 border-slate-50 shadow-sm">
-                            <div class="text-slate-400 bg-slate-50 w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center mb-3 md:mb-4"><i class="fa-solid fa-users"></i></div>
-                            <div class="text-slate-400 text-[9px] md:text-[11px] font-extrabold uppercase">Contactos</div>
-                            <div class="text-2xl md:text-4xl font-extrabold mt-1" id="stat-contacts">0</div>
+                            <div class="text-client bg-purple-50 w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center mb-3 md:mb-4"><i class="fa-solid fa-users"></i></div>
+                            <div class="text-slate-400 text-[9px] md:text-[11px] font-extrabold uppercase">Clientes</div>
+                            <div class="text-2xl md:text-4xl font-extrabold mt-1" id="stat-clients">0</div>
                         </div>
                     </div>
 
@@ -193,6 +239,16 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6" id="contacts-grid"></div>
                 </div>
+
+                <div id="view-clients" class="hidden space-y-6 md:space-y-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">Mis Clientes</h2>
+                        <button onclick="openModal('clientModal')" class="w-full md:w-auto bg-client text-white px-8 py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 font-extrabold">
+                            <i class="fa-solid fa-user-plus"></i> Nuevo Cliente
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6" id="clients-grid"></div>
+                </div>
             </div>
 
             <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center py-3 z-[150] shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
@@ -208,6 +264,10 @@
                     <i class="fa-solid fa-address-book text-xl"></i>
                     <span class="text-[10px] font-bold">Contactos</span>
                 </button>
+                <button onclick="navigate('clients')" id="m-nav-clients" class="flex flex-col items-center gap-1 text-slate-400 px-4">
+                    <i class="fa-solid fa-users text-xl"></i>
+                    <span class="text-[10px] font-bold">Clientes</span>
+                </button>
                 <button onclick="openModal('exitAppModal')" class="flex flex-col items-center gap-1 text-red-400 px-4">
                     <i class="fa-solid fa-right-from-bracket text-xl"></i>
                     <span class="text-[10px] font-bold">Salir</span>
@@ -216,6 +276,7 @@
         </main>
     </div>
 
+    <!-- Modal para Contactos -->
     <div id="contactModal" onclick="if(event.target === this) closeModal('contactModal')" class="hidden fixed inset-0 bg-slate-900/50 z-[400] flex items-center justify-center p-4">
         <div class="bg-white rounded-[2rem] p-8 w-full max-w-sm relative modal-animate max-h-[90vh] overflow-y-auto">
             <button onclick="closeModal('contactModal')" class="absolute top-5 right-5 text-slate-400">
@@ -230,6 +291,25 @@
         </div>
     </div>
 
+    <!-- Modal para Clientes -->
+    <div id="clientModal" onclick="if(event.target === this) closeModal('clientModal')" class="hidden fixed inset-0 bg-slate-900/50 z-[400] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] p-8 w-full max-w-md relative modal-animate max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('clientModal')" class="absolute top-5 right-5 text-slate-400">
+                <i class="fa-solid fa-circle-xmark text-2xl"></i>
+            </button>
+            <h3 class="text-xl font-extrabold mb-6 text-center">Nuevo Cliente</h3>
+            <form id="clientForm" class="space-y-4">
+                <input type="text" id="cl-name" placeholder="Nombre y Apellido" required class="w-full bg-slate-50 rounded-xl p-4 border-2 border-slate-100 focus:border-client outline-none">
+                <input type="text" id="cl-address" placeholder="Domicilio" required class="w-full bg-slate-50 rounded-xl p-4 border-2 border-slate-100 focus:border-client outline-none">
+                <input type="text" id="cl-city" placeholder="Ciudad" required class="w-full bg-slate-50 rounded-xl p-4 border-2 border-slate-100 focus:border-client outline-none">
+                <input type="tel" id="cl-phone" placeholder="Teléfono de contacto" required class="w-full bg-slate-50 rounded-xl p-4 border-2 border-slate-100 focus:border-client outline-none">
+                <textarea id="cl-reference" placeholder="Causa de referencia" rows="3" class="w-full bg-slate-50 rounded-xl p-4 border-2 border-slate-100 focus:border-client outline-none resize-none"></textarea>
+                <button type="submit" class="w-full bg-client text-white py-4 rounded-xl font-extrabold shadow-lg">Crear Cliente</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Eventos -->
     <div id="taskModal" class="hidden fixed inset-0 bg-slate-900/50 z-[400] flex items-center justify-center p-4">
         <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden relative max-h-[90vh] flex flex-col">
             <div class="p-6 border-b flex justify-between items-center bg-slate-50 font-extrabold">
@@ -242,6 +322,7 @@
                 <div><label class="text-[10px] font-extrabold text-slate-400 uppercase">Fecha</label><input type="date" id="t-date" required class="w-full bg-slate-100 border-none rounded-xl p-4 mt-1 font-bold"></div>
                 <div><label class="text-[10px] font-extrabold text-slate-400 uppercase">Hora</label><input type="time" id="t-time" required class="w-full bg-slate-100 border-none rounded-xl p-4 mt-1 font-bold"></div>
                 <div><label class="text-[10px] font-extrabold text-slate-400 uppercase">Contacto</label><select id="t-contact" class="w-full bg-slate-100 border-none rounded-xl p-4 mt-1 font-bold"></select></div>
+                <div><label class="text-[10px] font-extrabold text-slate-400 uppercase">Cliente</label><select id="t-client" class="w-full bg-slate-100 border-none rounded-xl p-4 mt-1 font-bold"></select></div>
                 <div><label class="text-[10px] font-extrabold text-slate-400 uppercase">Estado</label><select id="t-status" class="w-full bg-slate-100 border-none rounded-xl p-4 mt-1 font-bold"><option value="pending">Pendiente</option><option value="completed">Completada</option></select></div>
                 <button type="submit" class="md:col-span-2 bg-primary text-white font-extrabold py-4 rounded-xl mt-4 text-lg">Guardar Evento</button>
             </form>
@@ -310,21 +391,112 @@
         </div>
     </div>
 
+    <div id="previewClientModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[400] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl modal-animate p-10 text-center">
+            <div class="w-20 h-20 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl text-client"><i class="fa-solid fa-user-tie"></i></div>
+            <h3 id="cl-name" class="text-2xl font-extrabold text-slate-900">---</h3>
+            <div class="text-left space-y-2 mt-4">
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid fa-map-marker-alt text-client mt-1"></i>
+                    <span id="cl-address" class="text-slate-600 text-sm">---</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid fa-city text-client mt-1"></i>
+                    <span id="cl-city" class="text-slate-600 text-sm">---</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid fa-phone text-client mt-1"></i>
+                    <a href="#" id="cl-phone" class="text-slate-600 text-sm">---</a>
+                </div>
+                <div class="flex items-start gap-2 mt-2">
+                    <i class="fa-solid fa-file-alt text-client mt-1"></i>
+                    <span id="cl-reference" class="text-slate-600 text-sm">---</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mt-10">
+                <button id="cl-btn-delete" class="bg-red-50 text-red-600 py-4 rounded-xl font-extrabold text-[10px]">BORRAR</button>
+                <button onclick="closeModal('previewClientModal')" class="bg-slate-100 text-slate-500 py-4 rounded-xl font-extrabold text-[10px]">CERRAR</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Mantenemos toda tu lógica original de Firebase y funciones
         const firebaseConfig = {
             apiKey: "AIzaSyBIbsTJAXwGwlN3khbBKGkbrR9RjEFOs-8",
-  authDomain: "agenda-rf-def6.firebaseapp.com",
-  projectId: "agenda-rf-def6",
-  storageBucket: "agenda-rf-def6.firebasestorage.app",
-  messagingSenderId: "123036146077",
-  appId: "1:123036146077:web:4ce86a461401e790f6f774"
+            authDomain: "agenda-rf-def6.firebaseapp.com",
+            projectId: "agenda-rf-def6",
+            storageBucket: "agenda-rf-def6.firebasestorage.app",
+            messagingSenderId: "123036146077",
+            appId: "1:123036146077:web:4ce86a461401e790f6f774"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const mainRef = db.collection('users').doc('defaultUser');
 
-        const state = { tasks: [], contacts: [], renderDate: new Date(), deleteTarget: null, hasShownAlert: false, notifiedEvents: new Set() };
+        const state = { 
+            tasks: [], 
+            contacts: [], 
+            clients: [],
+            renderDate: new Date(), 
+            deleteTarget: null, 
+            hasShownAlert: false, 
+            notifiedEvents: new Set() 
+        };
+
+        // Clave de acceso
+        const ACCESS_KEY = "rolo123";
+
+        // Funciones para el modal de acceso
+        function showAccessModal() {
+            document.getElementById('accessModal').classList.remove('hidden');
+            document.getElementById('accessError').classList.add('hidden');
+            document.getElementById('accessKey').value = '';
+            document.getElementById('accessKey').classList.remove('shake');
+            document.getElementById('accessKey').focus();
+        }
+
+        function closeAccessModal() {
+            document.getElementById('accessModal').classList.add('hidden');
+            document.getElementById('accessError').classList.add('hidden');
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('accessKey');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye';
+            }
+        }
+
+        // Manejar el formulario de acceso
+        document.getElementById('accessForm').onsubmit = function(e) {
+            e.preventDefault();
+            const enteredKey = document.getElementById('accessKey').value;
+            const errorDiv = document.getElementById('accessError');
+            const input = document.getElementById('accessKey');
+            
+            if (enteredKey === ACCESS_KEY) {
+                // Clave correcta
+                closeAccessModal();
+                enterApp();
+            } else {
+                // Clave incorrecta
+                errorDiv.classList.remove('hidden');
+                input.classList.add('shake');
+                input.value = '';
+                input.focus();
+                
+                // Remover animación después de que termine
+                setTimeout(() => {
+                    input.classList.remove('shake');
+                }, 500);
+            }
+        };
 
         function enterApp() {
             document.getElementById('landingPage').classList.add('hidden');
@@ -347,20 +519,38 @@
             mainRef.collection('events').onSnapshot(snap => {
                 state.tasks = snap.docs.map(doc => {
                     const d = doc.data();
-                    return { id: doc.id, ...d, date: d.startDate?.split('T')[0] || d.date, time: d.startDate?.split('T')[1] || d.time };
+                    return { 
+                        id: doc.id, 
+                        ...d, 
+                        date: d.startDate?.split('T')[0] || d.date, 
+                        time: d.startDate?.split('T')[1] || d.time 
+                    };
                 });
-                if(!state.hasShownAlert) { checkUrgentEvents(); state.hasShownAlert = true; }
+                if(!state.hasShownAlert) { 
+                    checkUrgentEvents(); 
+                    state.hasShownAlert = true; 
+                }
                 refreshUI();
             });
+            
             mainRef.collection('contacts').onSnapshot(snap => {
                 state.contacts = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderContacts(); updateContactSelectors(); updateStats();
+                renderContacts(); 
+                updateContactSelectors(); 
+                updateStats();
+            });
+            
+            mainRef.collection('clients').onSnapshot(snap => {
+                state.clients = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderClients(); 
+                updateClientSelectors(); 
+                updateStats();
             });
         }
 
-        // Modificamos ligeramente navigate para actualizar UI móvil
+        // Modificamos navigate para incluir clientes
         function navigate(v) { 
-            ['dashboard', 'calendar', 'contacts'].forEach(x => { 
+            ['dashboard', 'calendar', 'contacts', 'clients'].forEach(x => { 
                 document.getElementById(`view-${x}`).classList.toggle('hidden', x !== v); 
                 
                 // Desktop Sidebar
@@ -385,7 +575,8 @@
                 const eventTime = new Date(`${t.date}T${t.time}`);
                 const diffMins = Math.round((eventTime - now) / 60000);
                 if(diffMins === 10 && !state.notifiedEvents.has(t.id)) {
-                    triggerAlarm(t); state.notifiedEvents.add(t.id);
+                    triggerAlarm(t); 
+                    state.notifiedEvents.add(t.id);
                 }
             });
         }
@@ -434,11 +625,29 @@
             setTimeout(() => closeModal('welcomeAlert'), 6000);
         }
 
-        function refreshUI() { renderDashboard(); renderCalendar(); updateStats(); }
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function goToToday() { state.renderDate = new Date(); renderCalendar(); }
-        function changeMonth(d) { state.renderDate.setMonth(state.renderDate.getMonth() + d); renderCalendar(); }
+        function refreshUI() { 
+            renderDashboard(); 
+            renderCalendar(); 
+            updateStats(); 
+        }
+        
+        function openModal(id) { 
+            document.getElementById(id).classList.remove('hidden'); 
+        }
+        
+        function closeModal(id) { 
+            document.getElementById(id).classList.add('hidden'); 
+        }
+        
+        function goToToday() { 
+            state.renderDate = new Date(); 
+            renderCalendar(); 
+        }
+        
+        function changeMonth(d) { 
+            state.renderDate.setMonth(state.renderDate.getMonth() + d); 
+            renderCalendar(); 
+        }
 
         function triggerDelete(id, type) {
             state.deleteTarget = { id, type };
@@ -447,9 +656,17 @@
 
         document.getElementById('confirmDeleteBtn').onclick = async () => {
             const { id, type } = state.deleteTarget;
-            await mainRef.collection(type === 'task' ? 'events' : 'contacts').doc(id).delete();
+            let collectionName;
+            if (type === 'task') collectionName = 'events';
+            else if (type === 'contact') collectionName = 'contacts';
+            else if (type === 'client') collectionName = 'clients';
+            
+            await mainRef.collection(collectionName).doc(id).delete();
             closeModal('deleteConfirmModal');
-            closeModal(type === 'task' ? 'previewTaskModal' : 'previewContactModal');
+            
+            if (type === 'task') closeModal('previewTaskModal');
+            else if (type === 'contact') closeModal('previewContactModal');
+            else if (type === 'client') closeModal('previewClientModal');
         };
 
         function showTaskPreview(id) {
@@ -475,18 +692,23 @@
         }
 
         function renderDashboard() {
-            const list = document.getElementById('dashboard-list'); list.innerHTML = '';
+            const list = document.getElementById('dashboard-list'); 
+            list.innerHTML = '';
             const range = parseInt(document.getElementById('rangeSelector').value);
-            const now = new Date(); now.setHours(0,0,0,0);
-            const limit = new Date(); limit.setDate(now.getDate() + range);
+            const now = new Date(); 
+            now.setHours(0,0,0,0);
+            const limit = new Date(); 
+            limit.setDate(now.getDate() + range);
             const filtered = state.tasks.filter(t => {
                 const d = new Date(t.date + "T12:00:00");
                 return d >= now && d <= limit;
             }).sort((a,b) => a.date.localeCompare(b.date));
+            
             if(filtered.length === 0) {
                 list.innerHTML = `<div class="p-10 text-center text-slate-400 text-sm font-extrabold">No hay eventos próximos.</div>`;
                 return;
             }
+            
             filtered.forEach(t => {
                 const isP = t.status !== 'completed';
                 const div = document.createElement('div');
@@ -498,12 +720,15 @@
         }
 
         function renderCalendar() {
-            const body = document.getElementById('calendar-body'); body.innerHTML = '';
+            const body = document.getElementById('calendar-body'); 
+            body.innerHTML = '';
             const y = state.renderDate.getFullYear(), m = state.renderDate.getMonth();
             const todayStr = new Date().toLocaleDateString('en-CA');
             document.getElementById('monthName').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(state.renderDate).toUpperCase();
             const first = new Date(y, m, 1).getDay(), total = new Date(y, m + 1, 0).getDate();
+            
             for(let i=0; i<first; i++) body.innerHTML += `<div class="day-box bg-slate-50/30"></div>`;
+            
             for(let d=1; d<=total; d++) {
                 const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const dayTasks = state.tasks.filter(t => t.date === ds);
@@ -511,7 +736,13 @@
                 div.className = `day-box p-1 md:p-3 cursor-pointer ${ds === todayStr ? 'today' : ''}`;
                 div.innerHTML = `<span class="text-[10px] text-slate-400 font-extrabold">${d}</span>`;
                 dayTasks.forEach(t => div.innerHTML += `<div class="text-[7px] md:text-[9px] truncate px-1 py-0.5 rounded-md mt-0.5 text-white font-extrabold ${t.status === 'completed' ? 'bg-success' : 'bg-pending'}">${t.title}</div>`);
-                div.onclick = () => { if(dayTasks.length) showTaskPreview(dayTasks[0].id); else { document.getElementById('t-date').value = ds; openTaskModal(); } };
+                div.onclick = () => { 
+                    if(dayTasks.length) showTaskPreview(dayTasks[0].id); 
+                    else { 
+                        document.getElementById('t-date').value = ds; 
+                        openTaskModal(); 
+                    } 
+                };
                 body.appendChild(div);
             }
         }
@@ -519,13 +750,18 @@
         function updateStats() {
             document.getElementById('stat-pending').innerText = state.tasks.filter(t => t.status !== 'completed').length;
             document.getElementById('stat-completed').innerText = state.tasks.filter(t => t.status === 'completed').length;
-            document.getElementById('stat-contacts').innerText = state.contacts.length;
+            document.getElementById('stat-clients').innerText = state.clients.length;
             document.getElementById('stat-today').innerText = state.tasks.filter(t => t.date === new Date().toLocaleDateString('en-CA')).length;
         }
 
         function updateContactSelectors() {
             const s = document.getElementById('t-contact');
             s.innerHTML = '<option value="">Sin contacto</option>' + state.contacts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+        
+        function updateClientSelectors() {
+            const s = document.getElementById('t-client');
+            s.innerHTML = '<option value="">Sin cliente</option>' + state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
         }
 
         function renderContacts() {
@@ -539,6 +775,18 @@
                     </div>
                 </div>`).join('');
         }
+        
+        function renderClients() {
+            const g = document.getElementById('clients-grid');
+            g.innerHTML = state.clients.map(c => `
+                <div class="bg-white p-6 rounded-3xl border-2 border-slate-50 shadow-sm flex items-center gap-4 cursor-pointer" onclick="showClientPreview('${c.id}')">
+                    <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-client"><i class="fa-solid fa-user-tie text-xl"></i></div>
+                    <div class="flex-1 overflow-hidden">
+                        <h4 class="font-extrabold text-slate-900 truncate">${c.name}</h4>
+                        <p class="text-[10px] text-client font-bold uppercase tracking-widest">${c.city || 'Sin ciudad'}</p>
+                    </div>
+                </div>`).join('');
+        }
 
         function showContactPreview(id) {
             const c = state.contacts.find(x => x.id === id);
@@ -549,27 +797,77 @@
             document.getElementById('pc-btn-delete').onclick = () => triggerDelete(c.id, 'contact');
             openModal('previewContactModal');
         }
+        
+        function showClientPreview(id) {
+            const c = state.clients.find(x => x.id === id);
+            document.getElementById('cl-name').innerText = c.name;
+            document.getElementById('cl-address').innerText = c.address || "---";
+            document.getElementById('cl-city').innerText = c.city || "---";
+            const phoneLink = document.getElementById('cl-phone');
+            phoneLink.innerText = c.phone || "---";
+            phoneLink.href = c.phone ? `tel:${c.phone}` : "#";
+            document.getElementById('cl-reference').innerText = c.reference || "Sin referencia";
+            document.getElementById('cl-btn-delete').onclick = () => triggerDelete(c.id, 'client');
+            openModal('previewClientModal');
+        }
 
-        function openTaskModal() { document.getElementById('taskForm').reset(); document.getElementById('t-id').value = ""; openModal('taskModal'); }
+        function openTaskModal() { 
+            document.getElementById('taskForm').reset(); 
+            document.getElementById('t-id').value = ""; 
+            openModal('taskModal'); 
+        }
+        
         function editTask(id) {
             const t = state.tasks.find(x => x.id === id);
-            document.getElementById('t-id').value = t.id; document.getElementById('t-title').value = t.title;
-            document.getElementById('t-date').value = t.date; document.getElementById('t-time').value = t.time;
-            document.getElementById('t-status').value = t.status; document.getElementById('t-contact').value = t.contactId || "";
+            document.getElementById('t-id').value = t.id; 
+            document.getElementById('t-title').value = t.title;
+            document.getElementById('t-date').value = t.date; 
+            document.getElementById('t-time').value = t.time;
+            document.getElementById('t-status').value = t.status; 
+            document.getElementById('t-contact').value = t.contactId || "";
+            document.getElementById('t-client').value = t.clientId || "";
             openModal('taskModal');
         }
 
         document.getElementById('taskForm').onsubmit = async (e) => {
-            e.preventDefault(); const id = document.getElementById('t-id').value;
-            const data = { title: document.getElementById('t-title').value, startDate: `${document.getElementById('t-date').value}T${document.getElementById('t-time').value}`, contactId: document.getElementById('t-contact').value, status: document.getElementById('t-status').value };
-            id ? await mainRef.collection('events').doc(id).update(data) : await mainRef.collection('events').add(data);
+            e.preventDefault(); 
+            const id = document.getElementById('t-id').value;
+            const data = { 
+                title: document.getElementById('t-title').value, 
+                startDate: `${document.getElementById('t-date').value}T${document.getElementById('t-time').value}`, 
+                contactId: document.getElementById('t-contact').value, 
+                clientId: document.getElementById('t-client').value,
+                status: document.getElementById('t-status').value 
+            };
+            
+            if (id) {
+                await mainRef.collection('events').doc(id).update(data);
+            } else {
+                await mainRef.collection('events').add(data);
+            }
             closeModal('taskModal');
         };
 
         document.getElementById('contactForm').onsubmit = async (e) => {
             e.preventDefault(); 
-            await mainRef.collection('contacts').add({ name: document.getElementById('c-name').value, phone: document.getElementById('c-phone').value });
+            await mainRef.collection('contacts').add({ 
+                name: document.getElementById('c-name').value, 
+                phone: document.getElementById('c-phone').value 
+            });
             closeModal('contactModal'); 
+            e.target.reset();
+        };
+        
+        document.getElementById('clientForm').onsubmit = async (e) => {
+            e.preventDefault(); 
+            await mainRef.collection('clients').add({ 
+                name: document.getElementById('cl-name').value,
+                address: document.getElementById('cl-address').value,
+                city: document.getElementById('cl-city').value,
+                phone: document.getElementById('cl-phone').value,
+                reference: document.getElementById('cl-reference').value
+            });
+            closeModal('clientModal'); 
             e.target.reset();
         };
     </script>
