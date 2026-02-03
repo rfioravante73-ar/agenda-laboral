@@ -95,7 +95,6 @@
         </div>
     </section>
 
-    <!-- Modal de Clave de Acceso -->
     <div id="accessModal" onclick="if(event.target === this) closeAccessModal()" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[250] flex items-center justify-center p-4">
         <div class="bg-white rounded-[2rem] p-8 w-full max-w-sm relative modal-animate">
             <button onclick="closeAccessModal()" class="absolute top-5 right-5 text-slate-400">
@@ -243,7 +242,7 @@
                 <div id="view-clients" class="hidden space-y-6 md:space-y-8">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">Mis Clientes</h2>
-                        <button onclick="openModal('clientModal')" class="w-full md:w-auto bg-client text-white px-8 py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 font-extrabold">
+                        <button onclick="document.getElementById('clientForm').reset(); openModal('clientModal')" class="w-full md:w-auto bg-client text-white px-8 py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 font-extrabold">
                             <i class="fa-solid fa-user-plus"></i> Nuevo Cliente
                         </button>
                     </div>
@@ -276,7 +275,6 @@
         </main>
     </div>
 
-    <!-- Modal para Contactos -->
     <div id="contactModal" onclick="if(event.target === this) closeModal('contactModal')" class="hidden fixed inset-0 bg-slate-900/50 z-[400] flex items-center justify-center p-4">
         <div class="bg-white rounded-[2rem] p-8 w-full max-w-sm relative modal-animate max-h-[90vh] overflow-y-auto">
             <button onclick="closeModal('contactModal')" class="absolute top-5 right-5 text-slate-400">
@@ -291,7 +289,6 @@
         </div>
     </div>
 
-    <!-- Modal para Clientes -->
     <div id="clientModal" onclick="if(event.target === this) closeModal('clientModal')" class="hidden fixed inset-0 bg-slate-900/50 z-[400] flex items-center justify-center p-4">
         <div class="bg-white rounded-[2rem] p-8 w-full max-w-md relative modal-animate max-h-[90vh] overflow-y-auto">
             <button onclick="closeModal('clientModal')" class="absolute top-5 right-5 text-slate-400">
@@ -309,7 +306,6 @@
         </div>
     </div>
 
-    <!-- Modal para Eventos -->
     <div id="taskModal" class="hidden fixed inset-0 bg-slate-900/50 z-[400] flex items-center justify-center p-4">
         <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden relative max-h-[90vh] flex flex-col">
             <div class="p-6 border-b flex justify-between items-center bg-slate-50 font-extrabold">
@@ -394,23 +390,23 @@
     <div id="previewClientModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[400] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl modal-animate p-10 text-center">
             <div class="w-20 h-20 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl text-client"><i class="fa-solid fa-user-tie"></i></div>
-            <h3 id="cl-name" class="text-2xl font-extrabold text-slate-900">---</h3>
+            <h3 id="pcl-name" class="text-2xl font-extrabold text-slate-900">---</h3>
             <div class="text-left space-y-2 mt-4">
                 <div class="flex items-start gap-2">
                     <i class="fa-solid fa-map-marker-alt text-client mt-1"></i>
-                    <span id="cl-address" class="text-slate-600 text-sm">---</span>
+                    <span id="pcl-address" class="text-slate-600 text-sm">---</span>
                 </div>
                 <div class="flex items-start gap-2">
                     <i class="fa-solid fa-city text-client mt-1"></i>
-                    <span id="cl-city" class="text-slate-600 text-sm">---</span>
+                    <span id="pcl-city" class="text-slate-600 text-sm">---</span>
                 </div>
                 <div class="flex items-start gap-2">
                     <i class="fa-solid fa-phone text-client mt-1"></i>
-                    <a href="#" id="cl-phone" class="text-slate-600 text-sm">---</a>
+                    <a href="#" id="pcl-phone" class="text-slate-600 text-sm">---</a>
                 </div>
                 <div class="flex items-start gap-2 mt-2">
                     <i class="fa-solid fa-file-alt text-client mt-1"></i>
-                    <span id="cl-reference" class="text-slate-600 text-sm">---</span>
+                    <span id="pcl-reference" class="text-slate-600 text-sm">---</span>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-4 mt-10">
@@ -798,15 +794,16 @@
             openModal('previewContactModal');
         }
         
+        // CORREGIDO: Se actualizó para usar los nuevos IDs únicos (pcl-name, etc) y mapear todos los campos
         function showClientPreview(id) {
             const c = state.clients.find(x => x.id === id);
-            document.getElementById('cl-name').innerText = c.name;
-            document.getElementById('cl-address').innerText = c.address || "---";
-            document.getElementById('cl-city').innerText = c.city || "---";
-            const phoneLink = document.getElementById('cl-phone');
+            document.getElementById('pcl-name').innerText = c.name;
+            document.getElementById('pcl-address').innerText = c.address || "---";
+            document.getElementById('pcl-city').innerText = c.city || "---";
+            const phoneLink = document.getElementById('pcl-phone');
             phoneLink.innerText = c.phone || "---";
             phoneLink.href = c.phone ? `tel:${c.phone}` : "#";
-            document.getElementById('cl-reference').innerText = c.reference || "Sin referencia";
+            document.getElementById('pcl-reference').innerText = c.reference || "Sin referencia";
             document.getElementById('cl-btn-delete').onclick = () => triggerDelete(c.id, 'client');
             openModal('previewClientModal');
         }
@@ -868,7 +865,7 @@
                 reference: document.getElementById('cl-reference').value
             });
             closeModal('clientModal'); 
-            e.target.reset();
+            e.target.reset(); // Esto ya funcionará correctamente ahora que los IDs no colisionan
         };
     </script>
 </body>
